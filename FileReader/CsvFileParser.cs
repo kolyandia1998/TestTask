@@ -12,10 +12,11 @@ namespace TestTask.FileReader
     public class CsvFileParser
     {
       
-        public IEnumerable  Read (Stream fileStream)
+        public IEnumerable<string[]>  Read (Stream fileStream)
         {
 
             var csvParser = new CsvTextFieldParser(fileStream);
+            csvParser.SetDelimiter(';');
             while (!csvParser.EndOfData)
             {   
                 string[]? fields = csvParser.ReadFields();
