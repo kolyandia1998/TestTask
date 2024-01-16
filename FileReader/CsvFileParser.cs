@@ -1,45 +1,40 @@
 ﻿using CsvHelper;
 using CsvHelper.Configuration;
 using CsvHelper.TypeConversion;
+using NotVisualBasic.FileIO;
+using System.Collections;
 using System.Globalization;
 using System.Text.Json.Nodes;
 using TestTask.Models;
 
 namespace TestTask.FileReader
 {
-    public class CsvFileParser : BaseFileParser
+    public class CsvFileParser
     {
       
-        public  override IEnumerable<T> Parse<T>(string path)
+        public IEnumerable  Read (Stream fileStream)
         {
-            
-            using var reader = new StreamReader(path);
 
-
-            /*    var config = new CsvConfiguration(CultureInfo.InvariantCulture)
-                {   
-                    HasHeaderRecord = false
-
-                };*/
-            var config = new CsvConfiguration(CultureInfo.InvariantCulture);
-            config.ApplyAttributes(typeof(T));
-            using var csv = new CsvReader(reader, config);
-           
-
-
-            Console.WriteLine(csv.Configuration.HasHeaderRecord);
-
-            /*  csv.Context.TypeConverterCache.AddConverter<DateTime>(new CustomDateTimeConverter());
-              csv.Context.RegisterClassMap<ValueMap>();*/
-             
-            var records = csv.GetRecords<T>();
-            return records.ToList();
- 
+            var csvParser = new CsvTextFieldParser(fileStream);
+            while (!csvParser.EndOfData)
+            {   
+                string[]? fields = csvParser.ReadFields();
+                if (fields is null)
+                {
+                    continue;
+                }
+                yield return fields;
+            }
         }
+
+
+        
+
+    }
 
 
        
 
 
-    }
+    
 }

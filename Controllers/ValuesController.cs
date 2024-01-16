@@ -25,6 +25,12 @@ namespace TestTask.Controllers
         [HttpPost("Upload")]
         public async Task Upload()
         {
+            var v = new ValueDTO();
+
+
+            ValueDTO.From(new string[] { "123", "1213" });
+
+
            var file = Request.Form.Files.First();
            var uploadPath =  $"{Directory.GetCurrentDirectory()}/uploads";
 

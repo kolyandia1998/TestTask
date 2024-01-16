@@ -8,10 +8,11 @@ namespace TestTask.Models
 
         public ValueMap()
         {
-            Map(m => m.Date).TypeConverter<CustomDateTimeConverter>();
-            Map(m => m.Second);
+            Map(m => m.Date);
+            Map(m => m.Second).Validate(int args => int.Parse(args) );
             Map(m => m.Indicator);
-             
+         
+
         }
     }
 }
