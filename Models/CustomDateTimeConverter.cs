@@ -9,7 +9,7 @@ namespace TestTask.Models
     {
         public override object? ConvertFromString(string? text, IReaderRow row, MemberMapData memberMapData)
         {   
-            DateTimeConverter 
+             
             DateTime date;
             if ( text != null && DateTime.TryParseExact(text, "yyyy-MM-d_hh-mm-ss", null, DateTimeStyles.None, out date) )
             return date;

@@ -14,12 +14,20 @@ namespace TestTask.FileReader
         {
             
             using var reader = new StreamReader(path);
-            var config = new CsvConfiguration(CultureInfo.InvariantCulture)
-            {   
-                HasHeaderRecord = false
-                
-            };
+
+
+            /*    var config = new CsvConfiguration(CultureInfo.InvariantCulture)
+                {   
+                    HasHeaderRecord = false
+
+                };*/
+            var config = new CsvConfiguration(CultureInfo.InvariantCulture);
+            config.ApplyAttributes(typeof(T));
             using var csv = new CsvReader(reader, config);
+           
+
+
+            Console.WriteLine(csv.Configuration.HasHeaderRecord);
 
             /*  csv.Context.TypeConverterCache.AddConverter<DateTime>(new CustomDateTimeConverter());
               csv.Context.RegisterClassMap<ValueMap>();*/
