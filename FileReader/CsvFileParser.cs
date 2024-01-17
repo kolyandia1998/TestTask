@@ -10,11 +10,9 @@ using TestTask.Models;
 namespace TestTask.FileReader
 {
     public class CsvFileParser
-    {
-      
+    {  
         public IEnumerable<string[]>  Read (Stream fileStream)
         {
-
             var csvParser = new CsvTextFieldParser(fileStream);
             csvParser.SetDelimiter(';');
             while (!csvParser.EndOfData)
@@ -27,10 +25,6 @@ namespace TestTask.FileReader
                 yield return fields;
             }
         }
-
-
-        
-
     }
 
 

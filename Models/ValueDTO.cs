@@ -1,12 +1,11 @@
-﻿using static System.Net.Mime.MediaTypeNames;
-using static System.Runtime.InteropServices.JavaScript.JSType;
+﻿using CsvHelper;
 using System.Globalization;
 
 namespace TestTask.Models
 {
-    public record ValueDTO
+    public static class ValueDTO
     {
-        public static Value From(string[] values)
+        public static Value From(string[] values,string fileName)
         {
             var dto = new Value();
 
@@ -18,8 +17,6 @@ namespace TestTask.Models
                 throw new ArgumentException();
             
             }
-
-
             int seconds;
             if (int.TryParse(values[1], null,out seconds))
                 dto.Second = seconds;
@@ -31,16 +28,24 @@ namespace TestTask.Models
 
             float indicator;
             if (float.TryParse(values[2], null, out indicator))
-                dto.Second = seconds;
+                dto.Indicator = indicator;
             else
             {
                 throw new ArgumentException();
             }
+            dto.FileName = fileName;
 
-
-            if ( true )
 
             return dto;
+
+        }
+
+
+
+        public static bool Validate(Value value) { 
+         var validator = new ValueValidator();
+            return validator.Validate(value).IsValid;
+
         }
 
 

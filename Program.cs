@@ -6,7 +6,7 @@ using TestTask.Data;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddDbContext<ValueContext>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("DataModelContext") ?? throw new InvalidOperationException("Connection string 'DataModelContext' not found.")));
+options.UseNpgsql(builder.Configuration.GetConnectionString("ValueContext") ?? throw new InvalidOperationException("Connection string 'ValueContext' not found.")));
 
 // Add services to the container.
 
@@ -23,6 +23,7 @@ if ( app.Environment.IsDevelopment() )
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+
 
 
 
