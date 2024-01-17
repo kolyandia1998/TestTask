@@ -1,12 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Rendering;
-using Microsoft.EntityFrameworkCore;
-using Npgsql;
+﻿using Microsoft.AspNetCore.Mvc;
 using TestTask.Data;
 using TestTask.FileReader;
 using TestTask.Models;
@@ -24,6 +16,20 @@ namespace TestTask.Controllers
         }
 
 
+
+
+
+  /*      private async Task(string fileName) {
+
+
+            var averageIndicator = _context.Values.Where(v => v.FileName == fileName).Average(v => v.Indicator);
+            var averageSecond = _context.Values.Where(v => v.FileName == fileName).Average(v => v.Second);
+            var minIndicatorValue = _context.Values.Where(v => v.FileName == fileName).Max(v => v.Indicator);
+
+
+        }*/
+
+
  
 
  
@@ -39,12 +45,11 @@ namespace TestTask.Controllers
            var fileRecords = csvParser.Read(fStream).Select(o => ValueDTO.From(o, uploadedFileName)).Where(o => ValueDTO.Validate(o)).ToList();
            var dbRecords =  _context.Values.Where(v => v.FileName == uploadedFileName).ToList();
 
-            if (dbRecords!=null) 
+            if (dbRecords.Count>0) 
             {
               _context.RemoveRange(dbRecords);
               await _context.SaveChangesAsync();
             }
-
             if (fileRecords.Count>0 && fileRecords.Count <= 10000)
             {
                 await _context.Values.AddRangeAsync(fileRecords);
@@ -71,7 +76,7 @@ namespace TestTask.Controllers
         {
             var dbRecords = _context.Values.Where(v => v.FileName == fileName).ToList();
 
-            if (dbRecords != null)
+            if (dbRecords.Count > 0)
             {
                 await Response.WriteAsJsonAsync(dbRecords);
             }
@@ -80,6 +85,15 @@ namespace TestTask.Controllers
                 await Response.WriteAsJsonAsync($"No records with fileName={fileName}");
             }
         }
+
+
+
+
+
+
+
+
+
 
 
     }
