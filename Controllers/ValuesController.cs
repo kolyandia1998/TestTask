@@ -23,43 +23,41 @@ namespace TestTask.Controllers
             _context = context;
         }
 
+
+ 
+
  
         [HttpPost("Upload")]
         public async Task Upload()
         {       
-           var file = Request.Form.Files.First();
-           var fileName = file.FileName;
+           var uploadedFile = Request.Form.Files.First();
+           var uploadedFileName = uploadedFile.FileName;
+
            var csvParser = new CsvFileParser();
+           using var fStream = uploadedFile.OpenReadStream();
 
-           using var fStream = file.OpenReadStream();
-           var valueList = csvParser.Read(fStream).Select(o => ValueDTO.From(o, fileName)).Where(o => ValueDTO.Validate(o)).ToList();
+           var fileRecords = csvParser.Read(fStream).Select(o => ValueDTO.From(o, uploadedFileName)).Where(o => ValueDTO.Validate(o)).ToList();
+           var dbRecords =  _context.Values.Where(v => v.FileName == uploadedFileName).ToList();
 
-           var fileNameFromDB = await _context.Values.Where(v => v.FileName == fileName).FirstOrDefaultAsync();
-
-            if (fileNameFromDB != null) {
-
-              _context.RemoveRange(_context.Values.Where(v=>v.FileName==fileName).ToList());
+            if (dbRecords!=null) 
+            {
+              _context.RemoveRange(dbRecords);
               await _context.SaveChangesAsync();
             }
 
-           await _context.Values.AddRangeAsync(valueList);
-            try
+            if (fileRecords.Count>0 && fileRecords.Count <= 10000)
             {
+                await _context.Values.AddRangeAsync(fileRecords);
                 await _context.SaveChangesAsync();
+                await Response.WriteAsync("Succes");
             }
-            catch (DbUpdateException ex) {
-                if (ex.InnerException != null)
-                    await Response.WriteAsync(ex.InnerException.Message);
-                else {
-                    await Response.WriteAsync(ex.Message);
-
-                }
-
+            else 
+            {
+                await Response.WriteAsync("Unsupported number of lines in file");
             }
-            
-       
-           await Response.WriteAsync("Succes");
         }
+
+
 
         [HttpGet("UploadFileForm")]
         public async Task GetForm()
@@ -69,11 +67,18 @@ namespace TestTask.Controllers
         }
 
         [HttpGet("GetRecords")]
-        public async Task Get()
+        public async Task GetValueRecords(string fileName)
         {
-           var list = _context.Values.ToList();
+            var dbRecords = _context.Values.Where(v => v.FileName == fileName).ToList();
 
-           await Response.WriteAsJsonAsync(  _context.Values.ToList()); 
+            if (dbRecords != null)
+            {
+                await Response.WriteAsJsonAsync(dbRecords);
+            }
+            else
+            {
+                await Response.WriteAsJsonAsync($"No records with fileName={fileName}");
+            }
         }
 
 
