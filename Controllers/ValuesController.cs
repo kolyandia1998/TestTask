@@ -8,12 +8,12 @@ namespace TestTask.Controllers
     [Route("[controller]")]
     public class ValuesController : Controller
     {
-        private readonly ValueContext _valueContext;
-        private readonly ResultContext _resultContext;
-        public ValuesController(ValueContext valuecContext, ResultContext  resultContext)
+        private readonly ValueContext _context;
+
+        public ValuesController(ValueContext valuecContext)
         {
-            _valueContext = valuecContext;
-            _resultContext = resultContext;
+            _context = valuecContext;
+
 
         }
 
@@ -36,17 +36,17 @@ namespace TestTask.Controllers
            using var fStream = uploadedFile.OpenReadStream();
 
            var fileRecords = csvParser.Read(fStream).Select(o => ValueDTO.From(o, uploadedFileName)).Where(o => ValueDTO.Validate(o)).ToList();
-           var dbRecords = _valueContext.Values.Where(v => v.FileName == uploadedFileName).ToList();
+           var dbRecords = _context.Values.Where(v => v.FileName == uploadedFileName).ToList();
 
             if (dbRecords.Count>0) 
             {
-                _valueContext.RemoveRange(dbRecords);
-              await _valueContext.SaveChangesAsync();
+                _context.RemoveRange(dbRecords);
+              await _context.SaveChangesAsync();
             }
             if (fileRecords.Count>0 && fileRecords.Count <= 10000)
             {
-                await _valueContext.Values.AddRangeAsync(fileRecords);
-                await _valueContext.SaveChangesAsync();
+                await _context.Values.AddRangeAsync(fileRecords);
+                await _context.SaveChangesAsync();
                 var minDate = fileRecords.Min(v => v.Date);
 
                 var allTime = (fileRecords.Max(v => v.Date) - minDate).Duration();
@@ -71,7 +71,11 @@ namespace TestTask.Controllers
                 resultDto.FirstOperationDate = minDate;
                 resultDto.FileName = uploadedFileName;
 
-                await _resultContext.AddAsync(resultDto);
+                await _context.Results.AddAsync(resultDto);
+                await _context.SaveChangesAsync();    
+
+
+
                 await Response.WriteAsync("Succes");
             }
             else 
@@ -92,7 +96,7 @@ namespace TestTask.Controllers
         [HttpGet("GetRecords")]
         public async Task GetValueRecords(string fileName)
         {
-            var dbRecords = _valueContext.Values.Where(v => v.FileName == fileName).ToList();
+            var dbRecords = _context.Values.Where(v => v.FileName == fileName).ToList();
 
             if (dbRecords.Count > 0)
             {

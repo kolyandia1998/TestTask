@@ -8,6 +8,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddDbContext<ValueContext>(options =>
 options.UseNpgsql(builder.Configuration.GetConnectionString("ValueContext") ?? throw new InvalidOperationException("Connection string 'ValueContext' not found.")));
 
+
 // Add services to the container.
 
 builder.Services.AddControllers();
