@@ -8,26 +8,19 @@ namespace TestTask.Controllers
     [Route("[controller]")]
     public class ValuesController : Controller
     {
-        private readonly ValueContext _context;
-
-        public ValuesController(ValueContext context)
+        private readonly ValueContext _valueContext;
+        private readonly ResultContext _resultContext;
+        public ValuesController(ValueContext valuecContext, ResultContext  resultContext)
         {
-            _context = context;
+            _valueContext = valuecContext;
+            _resultContext = resultContext;
+
         }
 
 
 
 
-
-  /*      private async Task(string fileName) {
-
-
-            var averageIndicator = _context.Values.Where(v => v.FileName == fileName).Average(v => v.Indicator);
-            var averageSecond = _context.Values.Where(v => v.FileName == fileName).Average(v => v.Second);
-            var minIndicatorValue = _context.Values.Where(v => v.FileName == fileName).Max(v => v.Indicator);
-
-
-        }*/
+     
 
 
  
@@ -43,17 +36,42 @@ namespace TestTask.Controllers
            using var fStream = uploadedFile.OpenReadStream();
 
            var fileRecords = csvParser.Read(fStream).Select(o => ValueDTO.From(o, uploadedFileName)).Where(o => ValueDTO.Validate(o)).ToList();
-           var dbRecords =  _context.Values.Where(v => v.FileName == uploadedFileName).ToList();
+           var dbRecords = _valueContext.Values.Where(v => v.FileName == uploadedFileName).ToList();
 
             if (dbRecords.Count>0) 
             {
-              _context.RemoveRange(dbRecords);
-              await _context.SaveChangesAsync();
+                _valueContext.RemoveRange(dbRecords);
+              await _valueContext.SaveChangesAsync();
             }
             if (fileRecords.Count>0 && fileRecords.Count <= 10000)
             {
-                await _context.Values.AddRangeAsync(fileRecords);
-                await _context.SaveChangesAsync();
+                await _valueContext.Values.AddRangeAsync(fileRecords);
+                await _valueContext.SaveChangesAsync();
+                var minDate = fileRecords.Min(v => v.Date);
+
+                var allTime = (fileRecords.Max(v => v.Date) - minDate).Duration();
+                var avgCompletionTime = fileRecords.Average(v => v.Second);
+                var avgIndicatorValue = fileRecords.Average(v => v.Indicator);
+                var numberLineCount = fileRecords.Count();
+
+                var sortedFileRecords = fileRecords.OrderBy(v => v.Indicator);
+                var medianIndicator = numberLineCount % 2 == 1 ? fileRecords.ElementAt(numberLineCount / 2).Indicator :
+                    (sortedFileRecords.ElementAt( numberLineCount / 2).Indicator + sortedFileRecords.ElementAt(numberLineCount/2 - 1).Indicator) / 2;
+                var maxIndicator = sortedFileRecords.Max(v => v.Indicator);
+                var minIndicator = sortedFileRecords.Min(v => v.Indicator);
+
+                var resultDto = new Result();
+                resultDto.AllTime = allTime;
+                resultDto.AvgIndicatorValue = avgIndicatorValue;
+                resultDto.MedianIndicatorValue = medianIndicator;
+                resultDto.AvgCompletionTime =(float) avgCompletionTime;
+                resultDto.LinesNumber = numberLineCount;
+                resultDto.MaxIndicator = maxIndicator;
+                resultDto.MinIndicator = minIndicator;  
+                resultDto.FirstOperationDate = minDate;
+                resultDto.FileName = uploadedFileName;
+
+                await _resultContext.AddAsync(resultDto);
                 await Response.WriteAsync("Succes");
             }
             else 
@@ -74,7 +92,7 @@ namespace TestTask.Controllers
         [HttpGet("GetRecords")]
         public async Task GetValueRecords(string fileName)
         {
-            var dbRecords = _context.Values.Where(v => v.FileName == fileName).ToList();
+            var dbRecords = _valueContext.Values.Where(v => v.FileName == fileName).ToList();
 
             if (dbRecords.Count > 0)
             {
