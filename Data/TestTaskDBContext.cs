@@ -7,9 +7,9 @@ using TestTask.Models;
 
 namespace TestTask.Data
 {
-    public class ValueContext : DbContext
+    public class TestTaskDBContext : DbContext
     {
-        public  ValueContext (DbContextOptions<ValueContext> options)
+        public  TestTaskDBContext (DbContextOptions<TestTaskDBContext> options)
             : base(options)
         {
             AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);

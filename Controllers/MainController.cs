@@ -7,24 +7,14 @@ using TestTask.Models;
 namespace TestTask.Controllers
 {
     [Route("[controller]")]
-    public class ValuesController : Controller
+    public class MainController : Controller
     {
-        private readonly ValueContext _context;
+        private readonly TestTaskDBContext _context;
 
-        public ValuesController(ValueContext valuecContext)
+        public MainController(TestTaskDBContext db_context)
         {
-            _context = valuecContext;
-
-
+            _context = db_context;
         }
-
-
-
-
-
-
-
-
 
 
         [HttpPost("Upload")]
@@ -95,7 +85,7 @@ namespace TestTask.Controllers
 
 
 
-        [HttpGet("UploadFileForm")]
+        [HttpGet("GetFormForFileUpload")]
         public async Task GetForm()
         {
             Response.ContentType = "text/html; charset=utf-8";
@@ -144,31 +134,5 @@ namespace TestTask.Controllers
 
 
         }
-
-
-        public struct DateDiapazone {
-
-         public   DateTime? DateBegin;
-         public   DateTime? DateEnd;
-            public DateDiapazone(DateTime begin, DateTime end) {
-            
-                   DateBegin = begin;
-                   DateEnd = end;
-            }
-
-
-
-
-
-
-            }
-
-
-
-
-
-
-
-
     }
 }

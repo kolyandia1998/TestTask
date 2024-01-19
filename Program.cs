@@ -5,7 +5,7 @@ using TestTask.Data;
 
 
 var builder = WebApplication.CreateBuilder(args);
-builder.Services.AddDbContext<ValueContext>(options =>
+builder.Services.AddDbContext<TestTaskDBContext>(options =>
 options.UseNpgsql(builder.Configuration.GetConnectionString("ValueContext") ?? throw new InvalidOperationException("Connection string 'ValueContext' not found.")));
 
 
