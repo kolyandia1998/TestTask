@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using TestTask.Data;
 using TestTask.FileReader;
 using TestTask.Models;
@@ -20,30 +21,30 @@ namespace TestTask.Controllers
 
 
 
-     
 
 
- 
 
- 
+
+
+
         [HttpPost("Upload")]
         public async Task Upload()
-        {       
-           var uploadedFile = Request.Form.Files.First();
-           var uploadedFileName = uploadedFile.FileName;
+        {
+            var uploadedFile = Request.Form.Files.First();
+            var uploadedFileName = uploadedFile.FileName;
 
-           var csvParser = new CsvFileParser();
-           using var fStream = uploadedFile.OpenReadStream();
+            var csvParser = new CsvFileParser();
+            using var fStream = uploadedFile.OpenReadStream();
 
-           var fileRecords = csvParser.Read(fStream).Select(o => ValueDTO.From(o, uploadedFileName)).Where(o => ValueDTO.Validate(o)).ToList();
-           var dbRecords = _context.Values.Where(v => v.FileName == uploadedFileName).ToList();
+            var fileRecords = csvParser.Read(fStream).Select(o => ValueDTO.From(o, uploadedFileName)).Where(o => ValueDTO.Validate(o)).ToList();
+            var dbRecords = _context.Values.Where(v => v.FileName == uploadedFileName).ToList();
 
-            if (dbRecords.Count>0) 
+            if (dbRecords.Count > 0)
             {
                 _context.RemoveRange(dbRecords);
-              await _context.SaveChangesAsync();
+                await _context.SaveChangesAsync();
             }
-            if (fileRecords.Count>0 && fileRecords.Count <= 10000)
+            if (fileRecords.Count > 0 && fileRecords.Count <= 10000)
             {
                 await _context.Values.AddRangeAsync(fileRecords);
                 await _context.SaveChangesAsync();
@@ -56,7 +57,7 @@ namespace TestTask.Controllers
 
                 var sortedFileRecords = fileRecords.OrderBy(v => v.Indicator);
                 var medianIndicator = numberLineCount % 2 == 1 ? fileRecords.ElementAt(numberLineCount / 2).Indicator :
-                    (sortedFileRecords.ElementAt( numberLineCount / 2).Indicator + sortedFileRecords.ElementAt(numberLineCount/2 - 1).Indicator) / 2;
+                    (sortedFileRecords.ElementAt(numberLineCount / 2).Indicator + sortedFileRecords.ElementAt(numberLineCount / 2 - 1).Indicator) / 2;
                 var maxIndicator = sortedFileRecords.Max(v => v.Indicator);
                 var minIndicator = sortedFileRecords.Min(v => v.Indicator);
 
@@ -64,21 +65,29 @@ namespace TestTask.Controllers
                 resultDto.AllTime = allTime;
                 resultDto.AvgIndicatorValue = avgIndicatorValue;
                 resultDto.MedianIndicatorValue = medianIndicator;
-                resultDto.AvgCompletionTime =(float) avgCompletionTime;
+                resultDto.AvgCompletionTime = (float)avgCompletionTime;
                 resultDto.LinesNumber = numberLineCount;
                 resultDto.MaxIndicator = maxIndicator;
-                resultDto.MinIndicator = minIndicator;  
+                resultDto.MinIndicator = minIndicator;
                 resultDto.FirstOperationDate = minDate;
                 resultDto.FileName = uploadedFileName;
 
-                await _context.Results.AddAsync(resultDto);
-                await _context.SaveChangesAsync();    
+                if (_context.Results.Where(r => r.FileName == uploadedFileName).Count() > 0)
+                {
+                    _context.Results.Update(resultDto);
+                }
+                else 
+                {
+                   await _context.Results.AddAsync(resultDto);
+                }
+                
+                await _context.SaveChangesAsync();
 
 
 
                 await Response.WriteAsync("Succes");
             }
-            else 
+            else
             {
                 await Response.WriteAsync("Unsupported number of lines in file");
             }
@@ -89,8 +98,8 @@ namespace TestTask.Controllers
         [HttpGet("UploadFileForm")]
         public async Task GetForm()
         {
-          Response.ContentType = "text/html; charset=utf-8";
-          await  Response.SendFileAsync("Form.html");
+            Response.ContentType = "text/html; charset=utf-8";
+            await Response.SendFileAsync("Form.html");
         }
 
         [HttpGet("GetRecords")]
@@ -108,8 +117,51 @@ namespace TestTask.Controllers
             }
         }
 
+        [HttpGet("GetResults")]
+        public async Task GetResultsRecords(string? fileName, DateTime? begin, DateTime? end, float? avgInicatorBegin, float? avgInicatorEnd, int? avgTimeBegin, int? avgTimeEnd)
+        {
+
+            var results = _context.Results.AsQueryable();
+
+            if (!string.IsNullOrEmpty(fileName)) {
+                results = results.Where(r => r.FileName == fileName);
+            }
+            if (begin != null && end != null) {
+                results = results.Where(r => r.FirstOperationDate >= begin && r.FirstOperationDate <= end);
+            }
+            if (avgInicatorBegin != 0 && avgInicatorBegin != null && avgInicatorEnd != 0 && avgInicatorEnd != null)
+            {
+                results = results.Where(r => r.AvgIndicatorValue >= avgInicatorBegin && r.AvgIndicatorValue <= avgInicatorEnd);
+            }
+            if (avgTimeBegin != 0 && avgTimeBegin != null && avgTimeEnd != 0 && avgTimeEnd != null) {
+
+                results = results.Where(r => r.AvgCompletionTime >= avgTimeBegin && r.AvgCompletionTime <= avgTimeEnd);
+            }
+
+            await  Response.WriteAsJsonAsync ( results.ToList());
 
 
+
+
+        }
+
+
+        public struct DateDiapazone {
+
+         public   DateTime? DateBegin;
+         public   DateTime? DateEnd;
+            public DateDiapazone(DateTime begin, DateTime end) {
+            
+                   DateBegin = begin;
+                   DateEnd = end;
+            }
+
+
+
+
+
+
+            }
 
 
 
