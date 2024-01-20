@@ -10,7 +10,6 @@ namespace TestTask.Controllers
     public class MainController : Controller
     {
         private readonly TestTaskDBContext _context;
-
         public MainController(TestTaskDBContext db_context)
         {
             _context = db_context;
@@ -18,7 +17,7 @@ namespace TestTask.Controllers
 
 
         [HttpPost("Upload")]
-        public async Task Upload()
+        public async Task<IActionResult> Upload()
         {
             var uploadedFile = Request.Form.Files.First();
             var uploadedFileName = uploadedFile.FileName;
@@ -39,18 +38,15 @@ namespace TestTask.Controllers
                 await _context.Values.AddRangeAsync(fileRecords);
                 await _context.SaveChangesAsync();
                 var minDate = fileRecords.Min(v => v.Date);
-
                 var allTime = (fileRecords.Max(v => v.Date) - minDate).Duration();
                 var avgCompletionTime = fileRecords.Average(v => v.Second);
                 var avgIndicatorValue = fileRecords.Average(v => v.Indicator);
                 var numberLineCount = fileRecords.Count();
-
                 var sortedFileRecords = fileRecords.OrderBy(v => v.Indicator);
                 var medianIndicator = numberLineCount % 2 == 1 ? fileRecords.ElementAt(numberLineCount / 2).Indicator :
-                    (sortedFileRecords.ElementAt(numberLineCount / 2).Indicator + sortedFileRecords.ElementAt(numberLineCount / 2 - 1).Indicator) / 2;
+                (sortedFileRecords.ElementAt(numberLineCount / 2).Indicator + sortedFileRecords.ElementAt(numberLineCount / 2 - 1).Indicator) / 2;
                 var maxIndicator = sortedFileRecords.Max(v => v.Indicator);
                 var minIndicator = sortedFileRecords.Min(v => v.Indicator);
-
                 var resultDto = new Result();
                 resultDto.AllTime = allTime;
                 resultDto.AvgIndicatorValue = avgIndicatorValue;
@@ -66,20 +62,16 @@ namespace TestTask.Controllers
                 {
                     _context.Results.Update(resultDto);
                 }
-                else 
+                else
                 {
-                   await _context.Results.AddAsync(resultDto);
+                    await _context.Results.AddAsync(resultDto);
                 }
-                
                 await _context.SaveChangesAsync();
-
-
-
-                await Response.WriteAsync("Succes");
+                return Ok("OK");
             }
             else
             {
-                await Response.WriteAsync("Unsupported number of lines in file");
+                return Ok("OK");
             }
         }
 
@@ -91,6 +83,9 @@ namespace TestTask.Controllers
             Response.ContentType = "text/html; charset=utf-8";
             await Response.SendFileAsync("Form.html");
         }
+
+
+
 
         [HttpGet("GetRecords")]
         public async Task GetValueRecords(string fileName)
@@ -110,7 +105,6 @@ namespace TestTask.Controllers
         [HttpGet("GetResults")]
         public async Task GetResultsRecords(string? fileName, DateTime? begin, DateTime? end, float? avgInicatorBegin, float? avgInicatorEnd, int? avgTimeBegin, int? avgTimeEnd)
         {
-
             var results = _context.Results.AsQueryable();
 
             if (!string.IsNullOrEmpty(fileName)) {
@@ -127,7 +121,6 @@ namespace TestTask.Controllers
 
                 results = results.Where(r => r.AvgCompletionTime >= avgTimeBegin && r.AvgCompletionTime <= avgTimeEnd);
             }
-
             await  Response.WriteAsJsonAsync ( results.ToList());
 
 
