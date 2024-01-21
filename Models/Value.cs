@@ -35,6 +35,7 @@ namespace TestTask.Models
             double index;   
             if (!double.TryParse(fields[2], null, out index))
             return null;
+            value.Index = index;    
 
             return value;
         }

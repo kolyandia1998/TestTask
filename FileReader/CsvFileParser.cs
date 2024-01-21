@@ -11,26 +11,26 @@ namespace TestTask.FileReader
 {
     public class CsvFileParser<T> : BaseFileParser<T>
     {
-        public override IEnumerable<T> Parse(Stream fileStream, Func<string[] ,T?> fromCsv,  Func<T,bool> validate)
-        { 
-          List<T> result = new List<T>();
-          using var textFieldParser = new TextFieldParser(fileStream);
+        public override IEnumerable<T> Parse(Stream fileStream, Func<string[], T?> fromCsv, Func<T, bool> validate)
+        {
+            List<T> result = new List<T>();
+            using var textFieldParser = new TextFieldParser(fileStream);
 
-          textFieldParser.SetDelimiters(";");
-          textFieldParser.TextFieldType = FieldType.Delimited;
+            textFieldParser.SetDelimiters(";");
+            textFieldParser.TextFieldType = FieldType.Delimited;
 
-          while (!textFieldParser.EndOfData) {
+            while (!textFieldParser.EndOfData) {
                 var fileds = textFieldParser.ReadFields();
                 if (fileds == null)
-                break;
+                    continue;
                 var valueFromFile = fromCsv(fileds);
                 if (valueFromFile == null)
-                break;
+                    continue;
                 if (!validate(valueFromFile))
-                break;
+                    continue;
                 result.Add(valueFromFile);
             }
-          if (result.Count < 1 && result.Count > 10000) {
+            if (result.Count < 1 || result.Count > 10000) {
                 throw new System.ComponentModel.DataAnnotations.ValidationException("Unsupported number of lines in file");
             }
           return result;
