@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.ComponentModel.DataAnnotations;
 using TestTask.Data;
 using TestTask.FileReader;
 using TestTask.Models;
@@ -16,62 +17,86 @@ namespace TestTask.Controllers
         }
 
 
-        [HttpPost("Upload")]
-        public async Task<IActionResult> Upload()
-        {
-            var uploadedFile = Request.Form.Files.First();
-            var uploadedFileName = uploadedFile.FileName;
 
-            var csvParser = new CsvFileParser();
-            using var fStream = uploadedFile.OpenReadStream();
+        private Result CreateResult(IEnumerable<Value> valuesFromFile) {
 
-            var fileRecords = csvParser.Read(fStream).Select(o => ValueDTO.From(o, uploadedFileName)).Where(o => ValueDTO.Validate(o)).ToList();
-            var dbRecords = _context.Values.Where(v => v.FileName == uploadedFileName).ToList();
+            var minDate = valuesFromFile.Min(v => v.StartTime);
+            var allTime = (valuesFromFile.Max(v => v.StartTime) - minDate).Duration();
+            var avgCompletionTime = valuesFromFile.Average(v => v.CompletionTime);
+            var avgIndicatorValue = valuesFromFile.Average(v => v.Index);
+            var numberLineCount = valuesFromFile.Count();
+            var sortedFileRecords = valuesFromFile.OrderBy(v => v.Index);
+            var medianIndicator = numberLineCount % 2 == 1 ? valuesFromFile.ElementAt(numberLineCount / 2).Index :
+            (sortedFileRecords.ElementAt(numberLineCount / 2).Index + sortedFileRecords.ElementAt(numberLineCount / 2 - 1).Index) / 2;
+            var maxIndicator = sortedFileRecords.Max(v => v.Index);
+            var minIndicator = sortedFileRecords.Min(v => v.Index);
+            var result = new Result();
+            result.AllTime = allTime;
+            result.AvgIndicatorValue = avgIndicatorValue;
+            result.MedianIndicatorValue = medianIndicator;
+            result.AvgCompletionTime = (double)avgCompletionTime;
+            result.LinesNumber = numberLineCount;
+            result.MaxIndicator = maxIndicator;
+            result.MinIndicator = minIndicator;
+            result.FirstOperationDate = minDate;
+            result.FileName = valuesFromFile.First().FileName;
+            return result;  
+        }
 
-            if (dbRecords.Count > 0)
+
+
+        private async Task addOrUpdate (IEnumerable<Value> valuesFromFile, Result result) {
+
+            var dbValueRecord = _context.Values.Where(v => v.FileName == valuesFromFile.First().FileName).ToList();
+
+
+
+            var dbResultRecord = _context.Results.Where(v => v.FileName == valuesFromFile.First().FileName).FirstOrDefault();
+
+
+            if (dbValueRecord.Count > 0)
             {
-                _context.RemoveRange(dbRecords);
-                await _context.SaveChangesAsync();
-            }
-            if (fileRecords.Count > 0 && fileRecords.Count <= 10000)
-            {
-                await _context.Values.AddRangeAsync(fileRecords);
-                await _context.SaveChangesAsync();
-                var minDate = fileRecords.Min(v => v.Date);
-                var allTime = (fileRecords.Max(v => v.Date) - minDate).Duration();
-                var avgCompletionTime = fileRecords.Average(v => v.Second);
-                var avgIndicatorValue = fileRecords.Average(v => v.Indicator);
-                var numberLineCount = fileRecords.Count();
-                var sortedFileRecords = fileRecords.OrderBy(v => v.Indicator);
-                var medianIndicator = numberLineCount % 2 == 1 ? fileRecords.ElementAt(numberLineCount / 2).Indicator :
-                (sortedFileRecords.ElementAt(numberLineCount / 2).Indicator + sortedFileRecords.ElementAt(numberLineCount / 2 - 1).Indicator) / 2;
-                var maxIndicator = sortedFileRecords.Max(v => v.Indicator);
-                var minIndicator = sortedFileRecords.Min(v => v.Indicator);
-                var resultDto = new Result();
-                resultDto.AllTime = allTime;
-                resultDto.AvgIndicatorValue = avgIndicatorValue;
-                resultDto.MedianIndicatorValue = medianIndicator;
-                resultDto.AvgCompletionTime = (float)avgCompletionTime;
-                resultDto.LinesNumber = numberLineCount;
-                resultDto.MaxIndicator = maxIndicator;
-                resultDto.MinIndicator = minIndicator;
-                resultDto.FirstOperationDate = minDate;
-                resultDto.FileName = uploadedFileName;
-
-                if (_context.Results.Where(r => r.FileName == uploadedFileName).Count() > 0)
-                {
-                    _context.Results.Update(resultDto);
-                }
-                else
-                {
-                    await _context.Results.AddAsync(resultDto);
-                }
-                await _context.SaveChangesAsync();
-                return Ok("OK");
+              _context.Values.RemoveRange(dbValueRecord);
+              await  _context.Values.AddRangeAsync(valuesFromFile);
+              _context.Results.Update(result);
+              await _context.SaveChangesAsync();
             }
             else
             {
-                return Ok("OK");
+             await   _context.Values.AddRangeAsync(valuesFromFile);
+             await   _context.Results.AddAsync(result);
+             await _context.SaveChangesAsync();
+            }
+
+
+        }
+
+
+        [HttpPost("Upload")]
+        public async Task<IResult> Upload()
+        {   
+           
+
+            var uploadedFile = Request.Form.Files.First();
+            
+            var uploadedFileName = uploadedFile.FileName;
+
+            if (!uploadedFileName.EndsWith("csv"))
+               
+            return  Results.Text("Unsupported file format");
+
+            var parser = new CsvFileParser<Value>();
+            using var fileStream = uploadedFile.OpenReadStream();
+            try
+            {
+                IEnumerable<Value> valuesFromFile = parser.Parse(fileStream, Value.FromCsv, Value.Validate).Select(v => { v.FileName = uploadedFileName; return v; });
+                var resull = CreateResult(valuesFromFile);
+                await addOrUpdate(valuesFromFile, resull);
+                return Results.Text("Successfully");
+            }
+            catch (ValidationException ex) 
+            {
+                return Results.Text(ex.Message);
             }
         }
 

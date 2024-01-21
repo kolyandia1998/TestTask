@@ -4,18 +4,18 @@ using System.Security.Cryptography.X509Certificates;
 
 namespace TestTask.Models
 {
-    public record Result
+    public class Result
     {
-     public    TimeSpan AllTime { get; set; }
+      public    TimeSpan AllTime { get; set; }
       public  DateTime FirstOperationDate { get; set; }
-      public  float AvgCompletionTime { get; set; }
-      public   float AvgIndicatorValue { get; set; }
+      public  double AvgCompletionTime { get; set; }
+      public   double AvgIndicatorValue { get; set; }
 
-      public  float MedianIndicatorValue { get; set; }
+      public  double MedianIndicatorValue { get; set; }
 
-     public   float MaxIndicator {get; set; }
+     public   double MaxIndicator {get; set; }
 
-      public  float MinIndicator { get; set; }
+      public  double MinIndicator { get; set; }
 
       public  int LinesNumber { get; set; }
       

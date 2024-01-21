@@ -18,7 +18,7 @@ namespace TestTask.Data
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            modelBuilder.Entity<Value>().HasKey(v => new { v.FileName, v.Date });
+            modelBuilder.Entity<Value>().HasKey(v => new { v.FileName, v.StartTime });
             modelBuilder.Entity<Result>().HasKey(v =>  v.FileName );
         }
         public DbSet<TestTask.Models.Value> Values { get; set; } = default!;
