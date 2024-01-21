@@ -1,11 +1,6 @@
 ﻿
-using FluentValidation;
 using Microsoft.VisualBasic.FileIO;
-using NotVisualBasic.FileIO;
-using System.ComponentModel.DataAnnotations;
-using System.IO;
-using System.Text;
-using TestTask.Models;
+
 
 namespace TestTask.FileReader
 {
@@ -19,7 +14,8 @@ namespace TestTask.FileReader
             textFieldParser.SetDelimiters(";");
             textFieldParser.TextFieldType = FieldType.Delimited;
 
-            while (!textFieldParser.EndOfData) {
+            while (!textFieldParser.EndOfData)
+            {
                 var fileds = textFieldParser.ReadFields();
                 if (fileds == null)
                     continue;
@@ -30,17 +26,18 @@ namespace TestTask.FileReader
                     continue;
                 result.Add(valueFromFile);
             }
-            if (result.Count < 1 || result.Count > 10000) {
+            if (result.Count < 1 || result.Count > 10000)
+            {
                 throw new System.ComponentModel.DataAnnotations.ValidationException("Unsupported number of lines in file");
             }
-          return result;
+            return result;
         }
     }
 }
 
 
-       
 
 
-    
+
+
 

@@ -20,7 +20,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="uploads\" />
+    <None Include="wwwroot\Form.html" />
   </ItemGroup>
 
 </Project>
