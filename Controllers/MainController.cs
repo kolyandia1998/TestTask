@@ -15,7 +15,6 @@ namespace TestTask.Controllers
             _context = db_context;
         }
 
-
         private async Task addOrUpdate(IEnumerable<Value> valuesFromFile, Result result)
         {
             var dbValueRecord = _context.Values.Where(v => v.FileName == valuesFromFile.First().FileName).ToList();
@@ -50,7 +49,7 @@ namespace TestTask.Controllers
                 return Results.Redirect("GetFormForFileUpload");
             var uploadedFileName = uploadedFile.FileName;
             if (!uploadedFileName.EndsWith("csv"))
-                return Results.Text("Unsupported file format");
+                return Results.BadRequest("Unsupported file format");
             var parser = new CsvFileParser<Value>();
             using var fileStream = uploadedFile.OpenReadStream();
             try
