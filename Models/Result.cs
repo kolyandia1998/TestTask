@@ -6,7 +6,6 @@ namespace TestTask.Models
     {
         public Result(IOrderedEnumerable<Value> valuesFromFile)
         {
-
             AllTime = (valuesFromFile.Max(v => v.StartTime) - valuesFromFile.Min(v => v.StartTime)).Duration();
             FirstOperationDate = valuesFromFile.Min(v => v.StartTime);
             AvgCompletionTime = valuesFromFile.Average(v => v.CompletionTime);
@@ -32,6 +31,7 @@ namespace TestTask.Models
             FileName = fileName;
             LinesNumber = linesNumber;
         }
+
         public Result() { }
         public TimeSpan AllTime { get; set; }
         public DateTime FirstOperationDate { get; set; }
